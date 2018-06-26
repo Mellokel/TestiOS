@@ -10,7 +10,10 @@ import UIKit
 
 class CellWithIndicator: UITableViewCell {
     
-    @IBOutlet weak var progressView: UIProgressView!
+    @IBOutlet private weak var progressView: UIProgressView!
     
+    func configureCell(value: Float) {
+        self.progressView.setProgress(value, animated: true)
+    }
     
 }
