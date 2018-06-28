@@ -9,34 +9,27 @@
 import UIKit
 
 class FileManagerForImages {
+    let fileManager = FileManager.default
+   
     func saveImage(withIndex index: Int, image: UIImage ) {
-        let fileManager = FileManager.default
-        let paths = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString).appendingPathComponent("image\(index).jpg")
-        print(paths)
         let imageData = UIImageJPEGRepresentation(image, 0.5)
-        fileManager.createFile(atPath: paths as String, contents: imageData, attributes: nil)
+        fileManager.createFile(atPath: getPath(index: index), contents: imageData, attributes: nil)
     }
-
+    
     func deleteImage(withIndex index: Int) {
-        let fileManager = FileManager.default
         do {
-            let paths = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString).appendingPathComponent("image\(index).jpg")
-            try fileManager.removeItem(atPath: paths)
+            try fileManager.removeItem(atPath: getPath(index: index))
         } catch { return }
     }
+    
     func getImage(withIndex index: Int) -> UIImage? {
-        let fileManager = FileManager.default
-        let imagePath = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString).appendingPathComponent("image\(index).jpg")
-        guard fileManager.fileExists(atPath: imagePath) else { return nil }
-        return UIImage(contentsOfFile: imagePath)
+        guard fileManager.fileExists(atPath: getPath(index: index)) else { return nil }
+        return UIImage(contentsOfFile: getPath(index: index))
     }
+    
     func loadImagesFromAlbum() -> [Int]{
-        let nsDocumentDirectory = FileManager.SearchPathDirectory.documentDirectory
-        let nsUserDomainMask = FileManager.SearchPathDomainMask.userDomainMask
-        let paths = NSSearchPathForDirectoriesInDomains(nsDocumentDirectory, nsUserDomainMask, true)
-        var theItems = [String]()
-        guard let dirPath = paths.first else { return [] }
-        let imageURL = URL(fileURLWithPath: dirPath)
+        var theItems: [String] = []
+        let imageURL = URL(fileURLWithPath: String(getDirectory()))
         do {
             theItems = try FileManager.default.contentsOfDirectory(atPath: imageURL.path)
             var result: [Int] = []
@@ -48,6 +41,18 @@ class FileManagerForImages {
             })
             return result
         } catch { return [] }
+    }
+    
+    func getPath(index: Int) -> String{
+        return String(getDirectory().appendingPathComponent("image\(index).jpg"))
+    }
+    
+    func getPath(name: String) -> String {
+        return String(getDirectory().appendingPathComponent(name))
+    }
+    
+    func getDirectory() -> NSString{
+        return NSString(string: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!)
     }
 
 
@@ -62,12 +67,8 @@ class FileManagerForImages {
     }
 
     func removeAllImages() {
-        let nsDocumentDirectory = FileManager.SearchPathDirectory.documentDirectory
-        let nsUserDomainMask = FileManager.SearchPathDomainMask.userDomainMask
-        let paths = NSSearchPathForDirectoriesInDomains(nsDocumentDirectory, nsUserDomainMask, true)
-        var theItems = [String]()
-        guard let dirPath = paths.first else { return }
-        let imageURL = URL(fileURLWithPath: dirPath)
+        var theItems: [String] = []
+        let imageURL = URL(fileURLWithPath: String(getDirectory()))
         do {
             theItems = try FileManager.default.contentsOfDirectory(atPath: imageURL.path)
             theItems.forEach({ (path) in
@@ -78,8 +79,7 @@ class FileManagerForImages {
     func deleteImage(withName name: String) {
         let fileManager = FileManager.default
         do {
-            let paths = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString).appendingPathComponent(name)
-            try fileManager.removeItem(atPath: paths)
+            try fileManager.removeItem(atPath: getPath(name: name))
         } catch { return }
     }
 }

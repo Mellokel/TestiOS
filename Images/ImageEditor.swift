@@ -8,13 +8,16 @@
 
 import UIKit
 
-class ImagesRedactor {
+class ImageEditor {
     
     private var fileManager = FileManagerForImages()
-    
-    func rotateImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Int,Int) -> Void,complete: @escaping (Int) -> Void) {
+   
+    func rotateImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let group = DispatchGroup()
+        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
+            
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
             let reorientedCIImage = ciImage.oriented(forExifOrientation: orientation)
@@ -26,13 +29,20 @@ class ImagesRedactor {
             
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
-            self.prepareTimer(valueForImage: imageNumber, image: UIImage(cgImage: cgImage), progress: progress, complete: complete)
+            
+            group.wait()
+            self.fileManager.saveImage(withIndex: imageNumber, image: UIImage(cgImage: cgImage))
+            complete(imageNumber)
         }
+        
     }
     
-    func invertColorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Int,Int) -> Void,complete: @escaping (Int) -> Void) {
+    func invertColorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let group = DispatchGroup()
+        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
+            
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
             let reorientedCIImage = ciImage.oriented(forExifOrientation: orientation)
@@ -42,12 +52,18 @@ class ImagesRedactor {
             
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
-            self.prepareTimer(valueForImage: imageNumber, image: UIImage(cgImage: cgImage), progress: progress, complete: complete)
+            
+            group.wait()
+            self.fileManager.saveImage(withIndex: imageNumber, image: UIImage(cgImage: cgImage))
+            complete(imageNumber)
         }
+        
     }
     
-    func mirrorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Int,Int) -> Void,complete: @escaping (Int) -> Void) {
+    func mirrorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let group = DispatchGroup()
+        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
@@ -55,12 +71,15 @@ class ImagesRedactor {
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(reorientedCIImage, from: reorientedCIImage.extent) else { return }
             let newImage = UIImage(cgImage: cgImage, scale: 0, orientation: UIImageOrientation.upMirrored)
-            self.prepareTimer(valueForImage: imageNumber, image: newImage, progress: progress, complete: complete)
+            
+            group.wait()
+            self.fileManager.saveImage(withIndex: imageNumber, image: newImage)
+            complete(imageNumber)
         }
+        
     }
     
-    func getImageOrientation(value: UIImageOrientation) -> Int32
-    {
+    func getImageOrientation(value: UIImageOrientation) -> Int32 {
         switch (value)
         {
         case .up:
@@ -84,48 +103,23 @@ class ImagesRedactor {
     
     
     //MARK: - Timer
-    func prepareTimer(valueForImage: Int, image: UIImage,  progress: @escaping (Int,Int,Int) -> Void,complete: @escaping (Int) -> Void) {
-        let duration:Int = Int(arc4random_uniform(UInt32(25)) + 1) + 5
+    func prepareTimer(valueForImage: Int,  progress: @escaping (Int,Float) -> Void, group: DispatchGroup) {
+        group.enter()
         
-        var userInfo: [String:Any] = [:]
-        userInfo["duration"] = duration
-        userInfo["image"] = image
-        userInfo["value"] = valueForImage
-       
-        userInfo["position"] = 0
-        userInfo["progress"] = progress
-        userInfo["complete"] = complete
+        let duration = Float(arc4random_uniform(UInt32(25)) + 1) + 5
+        var currentPosition:Float = 0
         
-        DispatchQueue.main.async {
-            let _ = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(self.startTimer(sender:)), userInfo: userInfo, repeats: false)
+        let t = DispatchSource.makeTimerSource()
+        t.schedule(deadline: .now(), repeating: 1)
+        t.setEventHandler {
+            if currentPosition == duration {
+                group.leave()
+                t.suspend()
+            } else {
+                currentPosition += 1
+                progress(valueForImage, currentPosition/duration)
+            }
         }
-        
-    }
-    
-    @objc fileprivate func startTimer(sender timer: Timer) {
-        guard var userInfo = timer.userInfo as? [String:Any] else { return }
-        let duration = userInfo["duration"] as! Int
-        let valueImage = userInfo["value"] as! Int
-        
-        var currentPosition = userInfo["position"] as! Int
-        let complete = userInfo["complete"] as! (Int) -> Void
-        let progress = userInfo["progress"] as! (Int,Int,Int) -> Void
-        
-        
-        
-        
-        if currentPosition == duration {
-            timer.invalidate()
-            let image = userInfo["image"] as! UIImage
-            self.fileManager.saveImage(withIndex: valueImage, image: image)
-            complete(valueImage)
-            //tableView.reloadRows(at: [indexPath], with: .automatic)
-        } else {
-            currentPosition += 1
-            progress(valueImage, currentPosition, duration)
-            //cell.configureCell(value: Float(currentPosition)/Float(duration))
-            userInfo["position"] = currentPosition
-            let _ = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(self.startTimer(sender:)), userInfo: userInfo, repeats: false)
-        }
+        t.resume()
     }
 }
