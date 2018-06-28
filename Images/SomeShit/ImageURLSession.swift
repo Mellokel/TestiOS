@@ -13,6 +13,7 @@ class ImageURLSession: URLSession, URLSessionDelegate, URLSessionDownloadDelegat
     private var progressClosure: ((String) -> Void)?
     private var completeClosure: ((UIImage?) -> Void)?
     
+    // методы для работы с загрузкой изображений из интернета
     func loadImage(url: URL, progress: @escaping (String) -> Void, comlete: @escaping (UIImage?) -> Void) {
         progressClosure = progress
         completeClosure = comlete

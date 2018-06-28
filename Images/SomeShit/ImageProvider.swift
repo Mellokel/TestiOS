@@ -8,12 +8,11 @@
 
 import UIKit
 
-class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     private let imageURLSession = ImageURLSession()
-    
-    
     private var updateImageClosure: ((UIImage) -> Void)? = nil
     
+    // Методы для получения изображений из камеры, галереи и интернета
     func presentCamera(updateImage: @escaping (UIImage) -> Void) {
         updateImageClosure = updateImage
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -33,8 +32,6 @@ class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UI
             imagePicker.sourceType = .photoLibrary;
             imagePicker.allowsEditing = true
             UIApplication.shared.delegate?.window??.rootViewController?.present(imagePicker, animated: true, completion: nil)
-            
-            
         }
     }
     
@@ -53,23 +50,19 @@ class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UI
         UIApplication.shared.delegate?.window??.rootViewController?.present(alertURL, animated: true, completion: nil)
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        let image = info[UIImagePickerControllerOriginalImage] as! UIImage
-        UIApplication.shared.delegate?.window??.rootViewController?.dismiss(animated: true){
-            if let closure = self.updateImageClosure {
-                closure(image)
-            }
-        }
-    }
-    
     func saveImage(image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         let alert = UIAlertController(title: "", message: "Изображение сохранено!", preferredStyle: .alert)
          UIApplication.shared.delegate?.window??.rootViewController?.present(alert, animated: true, completion: nil)
     }
     
-   
-    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        let image = info[UIImagePickerControllerOriginalImage] as! UIImage
+        UIApplication.shared.delegate?.window??.rootViewController?.dismiss(animated: true) {
+            guard let closure = self.updateImageClosure else { return }
+            closure(image)
+        }
+    }
 }
 
 

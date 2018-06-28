@@ -10,5 +10,5 @@ import Foundation
 import UIKit
 
 struct CellResultPrimaryInfo {
-    var image:UIImage? = nil
+    var image: UIImage? = nil
 }

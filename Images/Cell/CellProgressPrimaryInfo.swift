@@ -10,5 +10,4 @@ import Foundation
 
 struct CellProgressPrimaryInfo {
     var progress: Float? = nil
-    
 }

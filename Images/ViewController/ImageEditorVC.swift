@@ -6,10 +6,11 @@ import UIKit
 
 class ImageEditorVC: UIViewController {
     
-    var imagesId: [Int] = []
+    private var imagesId: [Int] = []
     
-    var imageEditor = ImageEditor()
-    var fileManager = FileManagerForImages()
+    private var imageEditor = ImageEditor()
+    private var fileManager = FileManagerForImages()
+    private let imageProvider = ImageProvider()
     
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var lableProgressPercent: UILabel!
@@ -17,7 +18,7 @@ class ImageEditorVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let ids = fileManager.loadImagesFromAlbum()
+        let ids = fileManager.getAllSavedImages()
         ids.forEach { (value) in
             imagesId.insert(value, at: 0)
         }
@@ -27,21 +28,7 @@ class ImageEditorVC: UIViewController {
         imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showMenu(sender:))))
         tableView.reloadData()
     }
-    
-    func preparationForEditing(closure: (UIImage,Int) -> Void) {
-        guard let image = self.imageView.image else { return }
-        var indexForNewImage = 0
-        if let first = self.imagesId.first {
-            indexForNewImage = first + 1
-        }
-        imagesId.insert(indexForNewImage, at: 0)
-        if imagesId.count != 1 {
-            tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
-        }
-        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
-        closure(image, indexForNewImage)
-    }
-    
+    //MARK: - Button Action
     @IBAction func actionButtonRotate(_ sender: UIButton) {
         preparationForEditing { (image, index) in
             imageEditor.rotateImage(image: image, imageNumber: index, progress: { (value,progress)  -> Void in
@@ -72,10 +59,8 @@ class ImageEditorVC: UIViewController {
         }
     }
     
-    let imageProvider = ImageProvider()
-    
-    //MARK: - Main Image
-    @objc fileprivate func showMenu(sender: Any) {
+    //MARK: - Main Image Action
+    @objc private func showMenu(sender: Any) {
         let alert = UIAlertController(title: "", message: "Выберите способ загрузки изображения", preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "Камера", style: .default, handler: { (_) in
             self.imageProvider.presentCamera(updateImage: { (image) in
@@ -99,17 +84,34 @@ class ImageEditorVC: UIViewController {
                 }
                 self.lableProgressPercent.text = ""
             })
-            
         }))
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
     
+    //MARK: - accessory methods
+    private func preparationForEditing(closure: (UIImage,Int) -> Void) {
+        guard let image = self.imageView.image else { return }
+        var indexForNewImage = 0
+        if let first = self.imagesId.first {
+            indexForNewImage = first + 1
+        }
+        imagesId.insert(indexForNewImage, at: 0)
+        if imagesId.count != 1 {
+            tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+        }
+        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
+        closure(image, indexForNewImage)
+    }
+    
 }
-extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource{
+//MARK: - Table View
+extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return imagesId.count
     }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         tableView.scrollsToTop = true
         if let image = fileManager.getImage(withIndex: imagesId[indexPath.row]) {
@@ -122,6 +124,7 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource{
             return cell
         }
     }
+    
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
         guard let cell = tableView.cellForRow(at: indexPath) as? ImageEditorResultCell else { return nil}
         let alert = UIAlertController(title: "", message: "Что сделать с изображением?", preferredStyle: .actionSheet)
@@ -150,7 +153,8 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource{
         } 
     }
     
-    func setProgressToCell(forValue value: Int, progress: Float) -> Void {
+    //MARK: - accessory methods for TableViewCell
+    private func setProgressToCell(forValue value: Int, progress: Float) -> Void {
         guard let index = self.imagesId.index(where: { (currentValue) -> Bool in
             currentValue == value
         }) else { return }
@@ -164,7 +168,7 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource{
         }
     }
     
-    func reloadCell(forValue value: Int) -> Void {
+    private func reloadCell(forValue value: Int) -> Void {
         guard let index = self.imagesId.index(where: { (currentValue) -> Bool in
             currentValue == value
         }) else { return }

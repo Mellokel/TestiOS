@@ -16,5 +16,4 @@ class ImageEditorProgressCell: UITableViewCell {
         guard let value = info.progress else { return }
         progressView.setProgress(value, animated: true)
     }
-    
 }

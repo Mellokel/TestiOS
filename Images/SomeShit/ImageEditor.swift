@@ -9,15 +9,16 @@
 import UIKit
 
 class ImageEditor {
-    
     private var fileManager = FileManagerForImages()
    
+    //MARK: - main methods
+    // методы для редактирования изображений
     func rotateImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
-        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
+        
+        self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
-            
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
             let reorientedCIImage = ciImage.oriented(forExifOrientation: orientation)
@@ -26,7 +27,6 @@ class ImageEditor {
             let transform = CGAffineTransform(rotationAngle: CGFloat(-Double.pi/2))
             filter?.setValue(NSValue(cgAffineTransform: transform), forKey: "inputTransform")
             guard let outputImage = filter?.outputImage else { return }
-            
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
             
@@ -40,16 +40,15 @@ class ImageEditor {
     func invertColorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
-        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
+        
+        self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
-            
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
             let reorientedCIImage = ciImage.oriented(forExifOrientation: orientation)
             let filter = CIFilter(name: "CIPhotoEffectMono")
             filter?.setValue(reorientedCIImage, forKey: kCIInputImageKey)
             guard let outputImage = filter?.outputImage else { return }
-            
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
             
@@ -63,7 +62,8 @@ class ImageEditor {
     func mirrorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
-        self.prepareTimer(valueForImage: imageNumber, progress: progress, group: group)
+        
+        self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
         queue.async {
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
@@ -79,9 +79,10 @@ class ImageEditor {
         
     }
     
-    func getImageOrientation(value: UIImageOrientation) -> Int32 {
-        switch (value)
-        {
+    //MARK: - accessory methods
+    // получения правильного значения для ориентации в изобрабажениях
+    private func getImageOrientation(value: UIImageOrientation) -> Int32 {
+        switch (value) {
         case .up:
             return 1
         case .down:
@@ -101,9 +102,8 @@ class ImageEditor {
         }
     }
     
-    
-    //MARK: - Timer
-    func prepareTimer(valueForImage: Int,  progress: @escaping (Int,Float) -> Void, group: DispatchGroup) {
+    // таймер для имитации длительности преобразования процесса
+    private func startTimer(valueForImage: Int,  progress: @escaping (Int,Float) -> Void, group: DispatchGroup) {
         group.enter()
         
         let duration = Float(arc4random_uniform(UInt32(25)) + 1) + 5
