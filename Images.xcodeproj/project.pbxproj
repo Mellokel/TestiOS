@@ -53,7 +53,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		845CE9CB20E4D54C00506815 /* SomeShit */ = {
+		845CE9CB20E4D54C00506815 /* Auxiliary */ = {
 			isa = PBXGroup;
 			children = (
 				8470B13A20E23E3D00EC2FD4 /* ImageEditor.swift */,
@@ -61,15 +61,17 @@
 				8470B13C20E2895C00EC2FD4 /* ImageProvider.swift */,
 				846DC56A20E3B2EE008DC1F4 /* ImageURLSession.swift */,
 			);
-			path = SomeShit;
+			path = Auxiliary;
 			sourceTree = "<group>";
 		};
-		846DC56820E3A006008DC1F4 /* ViewController */ = {
+		846DC56820E3A006008DC1F4 /* ImageEditorVC */ = {
 			isa = PBXGroup;
 			children = (
+				845CE9CB20E4D54C00506815 /* Auxiliary */,
+				846DC56920E3A0A5008DC1F4 /* Cell */,
 				848394E020DB583600C18AC9 /* ImageEditorVC.swift */,
 			);
-			path = ViewController;
+			path = ImageEditorVC;
 			sourceTree = "<group>";
 		};
 		846DC56920E3A0A5008DC1F4 /* Cell */ = {
@@ -102,9 +104,7 @@
 		848394DD20DB583600C18AC9 /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				845CE9CB20E4D54C00506815 /* SomeShit */,
-				846DC56920E3A0A5008DC1F4 /* Cell */,
-				846DC56820E3A006008DC1F4 /* ViewController */,
+				846DC56820E3A006008DC1F4 /* ImageEditorVC */,
 				848394E820DB583600C18AC9 /* Assets.xcassets */,
 				848394EA20DB583600C18AC9 /* LaunchScreen.storyboard */,
 				848394DE20DB583600C18AC9 /* AppDelegate.swift */,

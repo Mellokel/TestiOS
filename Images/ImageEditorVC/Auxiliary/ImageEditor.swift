@@ -1,11 +1,3 @@
-//
-//  ImagesRedactor.swift
-//  Images
-//
-//  Created by Admin on 26.06.18.
-//  Copyright © 2018 Admin. All rights reserved.
-//
-
 import UIKit
 
 class ImageEditor {
@@ -14,10 +6,17 @@ class ImageEditor {
     //MARK: - main methods
     // методы для редактирования изображений
     func rotateImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
+        var localImage: UIImage?
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
-        
+        group.enter()
+        group.notify(queue: queue) {
+            self.fileManager.saveImage(withIndex: imageNumber, image: localImage!)
+            complete(imageNumber)
+        }
         self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
+    
+        group.enter()
         queue.async {
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
@@ -29,19 +28,24 @@ class ImageEditor {
             guard let outputImage = filter?.outputImage else { return }
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
-            
-            group.wait()
-            self.fileManager.saveImage(withIndex: imageNumber, image: UIImage(cgImage: cgImage))
-            complete(imageNumber)
+            localImage =  UIImage(cgImage: cgImage)
+            group.leave()
         }
-        
+        group.leave()
     }
     
     func invertColorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
+        var localImage: UIImage?
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
-        
+        group.enter()
+        group.notify(queue: queue) {
+            self.fileManager.saveImage(withIndex: imageNumber, image: localImage!)
+            complete(imageNumber)
+        }
         self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
+        
+        group.enter()
         queue.async {
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
@@ -51,19 +55,25 @@ class ImageEditor {
             guard let outputImage = filter?.outputImage else { return }
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(outputImage, from: outputImage.extent) else { return }
-            
-            group.wait()
-            self.fileManager.saveImage(withIndex: imageNumber, image: UIImage(cgImage: cgImage))
-            complete(imageNumber)
+            localImage = UIImage(cgImage: cgImage)
+            group.leave()
         }
-        
+        group.leave()
     }
     
     func mirrorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
+        var locakImage: UIImage?
         let queue = DispatchQueue(label: "\(imageNumber + 2)")
         let group = DispatchGroup()
+        group.enter()
+        group.notify(queue: queue) {
+            self.fileManager.saveImage(withIndex: imageNumber, image: locakImage!)
+            complete(imageNumber)
+        }
         
         self.startTimer(valueForImage: imageNumber, progress: progress, group: group)
+        
+        group.enter()
         queue.async {
             let orientation = self.getImageOrientation(value: image.imageOrientation)
             let ciImage = CIImage(cgImage: (image.cgImage)!)
@@ -71,12 +81,10 @@ class ImageEditor {
             let contex = CIContext(options: [kCIContextUseSoftwareRenderer:true])
             guard let cgImage = contex.createCGImage(reorientedCIImage, from: reorientedCIImage.extent) else { return }
             let newImage = UIImage(cgImage: cgImage, scale: 0, orientation: UIImageOrientation.upMirrored)
-            
-            group.wait()
-            self.fileManager.saveImage(withIndex: imageNumber, image: newImage)
-            complete(imageNumber)
+            locakImage = newImage
+            group.leave()
         }
-        
+        group.leave()
     }
     
     //MARK: - accessory methods
@@ -105,7 +113,6 @@ class ImageEditor {
     // таймер для имитации длительности преобразования процесса
     private func startTimer(valueForImage: Int,  progress: @escaping (Int,Float) -> Void, group: DispatchGroup) {
         group.enter()
-        
         let duration = Float(arc4random_uniform(UInt32(25)) + 1) + 5
         var currentPosition:Float = 0
         

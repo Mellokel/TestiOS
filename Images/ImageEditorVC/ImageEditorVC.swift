@@ -1,7 +1,3 @@
-
-
-
-
 import UIKit
 
 class ImageEditorVC: UIViewController {
@@ -18,6 +14,7 @@ class ImageEditorVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        fileManager.removeAllImages()
         let ids = fileManager.getAllSavedImages()
         ids.forEach { (value) in
             imagesId.insert(value, at: 0)
