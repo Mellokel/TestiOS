@@ -9,7 +9,6 @@
 import UIKit
 
 class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    private let imageURLSession = ImageURLSession()
     private var updateImageClosure: ((UIImage) -> Void)? = nil
     
     // Методы для получения изображений из камеры, галереи и интернета
@@ -42,7 +41,10 @@ class ImageProvider: UIImagePickerController,UIImagePickerControllerDelegate, UI
             let textField = alertURL.textFields?.first
             guard let text = textField?.text  else { return }
             guard let url = URL(string: text) else { return }
-            self.imageURLSession.loadImage(url: url, progress: progress, comlete: complete)
+            let imageURLSession = ImageURLSession()
+            imageURLSession.progressUpdateClosureHandler = progress
+            imageURLSession.downloadCompleteClosureHandler = complete
+            imageURLSession.loadImage(url: url)
         }))
         alertURL.addTextField(configurationHandler: { (textField) in
             textField.placeholder = "URL"

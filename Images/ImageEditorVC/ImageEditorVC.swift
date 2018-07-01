@@ -3,6 +3,9 @@ import UIKit
 class ImageEditorVC: UIViewController {
     
     private var imagesId: [Int] = []
+    private let cellResultIndentifire = "cellResult"
+    private let cellIndicatorIndentifire = "cellIndicator"
+
     
     private var imageEditor = ImageEditor()
     private var fileManager = FileManagerForImages()
@@ -28,10 +31,14 @@ class ImageEditorVC: UIViewController {
     //MARK: - Button Action
     @IBAction func actionButtonRotate(_ sender: UIButton) {
         preparationForEditing { (image, index) in
-            imageEditor.rotateImage(image: image, imageNumber: index, progress: { (value,progress)  -> Void in
-                self.setProgressToCell(forValue: value, progress: progress)
+            imageEditor.rotateImage(image: image, imageNumber: index, progress: { (value,progress)  -> Void  in
+                DispatchQueue.main.async {
+                    self.setProgressToCell(forValue: value, progress: progress)
+                }
             }) { (value) in
-                self.reloadCell(forValue: value)
+                DispatchQueue.main.async {
+                    self.reloadCell(forValue: value)
+                }
             }
         }
     }
@@ -39,9 +46,13 @@ class ImageEditorVC: UIViewController {
     @IBAction func actionButtonInvert(_ sender: UIButton) {
         preparationForEditing { (image, index) in
             imageEditor.invertColorImage(image: image, imageNumber: index, progress: { (value,progress)  -> Void in
-                self.setProgressToCell(forValue: value, progress: progress)
+                DispatchQueue.main.async {
+                    self.setProgressToCell(forValue: value, progress: progress)
+                }
             }) { (value) in
-                self.reloadCell(forValue: value)
+                DispatchQueue.main.async {
+                    self.reloadCell(forValue: value)
+                }
             }
         }
     }
@@ -49,9 +60,13 @@ class ImageEditorVC: UIViewController {
     @IBAction func actionButtonMirror(_ sender: UIButton) {
         preparationForEditing { (image, index) in
             imageEditor.mirrorImage(image: image, imageNumber: index, progress: { (value,progress)  -> Void in
-                self.setProgressToCell(forValue: value, progress: progress)
+                DispatchQueue.main.async {
+                    self.setProgressToCell(forValue: value, progress: progress)
+                }
             }) { (value) in
-                self.reloadCell(forValue: value)
+                DispatchQueue.main.async {
+                    self.reloadCell(forValue: value)
+                }
             }
         }
     }
@@ -60,26 +75,30 @@ class ImageEditorVC: UIViewController {
     @objc private func showMenu(sender: Any) {
         let alert = UIAlertController(title: "", message: "Выберите способ загрузки изображения", preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "Камера", style: .default, handler: { (_) in
-            self.imageProvider.presentCamera(updateImage: { (image) in
-                self.imageView.image = image
+            self.imageProvider.presentCamera(updateImage: { [weak self] (image) in
+                guard let strongSelf = self else { return }
+                strongSelf.imageView.image = image
             })
             
         }))
         alert.addAction(UIAlertAction(title: "Галерея", style: .default, handler: { (_) in
-            self.imageProvider.presentLibrary(updateImage: { (image) in
-                self.imageView.image = image
+            self.imageProvider.presentLibrary(updateImage: { [weak self] (image) in
+                guard let strongSelf = self else { return }
+                strongSelf.imageView.image = image
             })
             
         }))
         alert.addAction(UIAlertAction(title: "По ссылке", style: .default, handler: { (_) in
             self.lableProgressPercent.text = "0$"
-            self.imageProvider.presentURLDialog(progress: { (percent) in
-                self.lableProgressPercent.text = percent
-            }, complete: { (loadedImage) in
+            self.imageProvider.presentURLDialog(progress: { [weak self] (percent) in
+                guard let strongSelf = self else { return }
+                strongSelf.lableProgressPercent.text = percent
+            }, complete: { [weak self] (loadedImage) in
+                guard let strongSelf = self else { return }
                 if let image = loadedImage {
-                    self.imageView.image = image
+                    strongSelf.imageView.image = image
                 }
-                self.lableProgressPercent.text = ""
+                strongSelf.lableProgressPercent.text = ""
             })
         }))
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
@@ -112,12 +131,12 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         tableView.scrollsToTop = true
         if let image = fileManager.getImage(withIndex: imagesId[indexPath.row]) {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cellResult") as! ImageEditorResultCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: cellResultIndentifire) as! ImageEditorResultCell
             let info = CellResultPrimaryInfo(image: image)
             cell.configureCell(withPrimaryInfo: info)
             return cell
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cellIndicator") as! ImageEditorProgressCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: cellIndicatorIndentifire) as! ImageEditorProgressCell
             return cell
         }
     }
@@ -126,7 +145,7 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.cellForRow(at: indexPath) as? ImageEditorResultCell else { return nil}
         let alert = UIAlertController(title: "", message: "Что сделать с изображением?", preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "Использовать", style: .default, handler: { (_) in
-            self.imageView.image = cell.getImage()
+            self.imageView.image = self.fileManager.getImage(withIndex: self.imagesId[indexPath.row])
         }))
         alert.addAction(UIAlertAction(title: "Сохранить", style: .default, handler: { (_) in
             guard let image = cell.imageView?.image else { return }
@@ -144,7 +163,7 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if let image = fileManager.getImage(withIndex: imagesId[indexPath.row]) {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cellResult") as! ImageEditorResultCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: cellResultIndentifire) as! ImageEditorResultCell
             let info = CellResultPrimaryInfo(image: image)
             cell.configureCell(withPrimaryInfo: info)
         } 
@@ -157,12 +176,9 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
         }) else { return }
         
         let indexPath = IndexPath(row: index, section: 0)
-        
-        DispatchQueue.main.async {
-            guard let cell = self.tableView.cellForRow(at: indexPath) as? ImageEditorProgressCell else { return }
-            let info = CellProgressPrimaryInfo(progress: progress)
-            cell.configureCell(withPrimaryInfo: info)
-        }
+        guard let cell = self.tableView.cellForRow(at: indexPath) as? ImageEditorProgressCell else { return }
+        let info = CellProgressPrimaryInfo(progress: progress)
+        cell.configureCell(withPrimaryInfo: info)
     }
     
     private func reloadCell(forValue value: Int) -> Void {
@@ -171,9 +187,7 @@ extension ImageEditorVC: UITableViewDelegate, UITableViewDataSource {
         }) else { return }
         
         let indexPath = IndexPath(row: index, section: 0)
-        DispatchQueue.main.async {
-            self.tableView.reloadRows(at: [indexPath], with: .automatic)
-        }
+        self.tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 }
 

@@ -7,7 +7,8 @@ class ImageEditor {
     // методы для редактирования изображений
     func rotateImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         var localImage: UIImage?
-        let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let queue = DispatchQueue(label: "\(imageNumber)")
+        
         let group = DispatchGroup()
         group.enter()
         group.notify(queue: queue) {
@@ -36,7 +37,7 @@ class ImageEditor {
     
     func invertColorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         var localImage: UIImage?
-        let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let queue = DispatchQueue(label: "\(imageNumber)")
         let group = DispatchGroup()
         group.enter()
         group.notify(queue: queue) {
@@ -63,7 +64,7 @@ class ImageEditor {
     
     func mirrorImage(image: UIImage, imageNumber: Int, progress: @escaping (Int,Float) -> Void,complete: @escaping (Int) -> Void) {
         var locakImage: UIImage?
-        let queue = DispatchQueue(label: "\(imageNumber + 2)")
+        let queue = DispatchQueue(label: "\(imageNumber)")
         let group = DispatchGroup()
         group.enter()
         group.notify(queue: queue) {

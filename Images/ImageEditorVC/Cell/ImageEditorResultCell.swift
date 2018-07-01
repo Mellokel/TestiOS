@@ -15,8 +15,4 @@ class ImageEditorResultCell: UITableViewCell {
         guard let image = info.image else { return }
         resultImageView.image = image
     }
-    
-    func getImage() -> UIImage? {
-        return resultImageView.image
-    }
 }
